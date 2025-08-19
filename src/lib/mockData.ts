@@ -2,77 +2,77 @@ import { Product } from "@/types";
 
 export const mockProducts: Product[] = [
   {
-    sku: "CY-SRV-001",
-    name: "Cyoda Enterprise License",
-    description: "Full enterprise license for Cyoda event-driven backend platform with unlimited events processing",
-    price: 24999,
-    quantityAvailable: 10,
-    category: "Licenses",
-    imageUrl: "/api/placeholder/400/300"
-  },
-  {
-    sku: "CY-CON-002", 
-    name: "Professional Services - Implementation",
-    description: "Complete implementation package including setup, configuration, and training for Cyoda platform",
-    price: 15000,
-    quantityAvailable: 5,
-    category: "Services",
-    imageUrl: "/api/placeholder/400/300"
-  },
-  {
-    sku: "CY-SUP-003",
-    name: "Premium Support Package",
-    description: "24/7 priority support with dedicated technical account manager and SLA guarantees",
-    price: 8500,
+    sku: "BK-DRV-001",
+    name: "Shimano Ultegra Di2 Derailleur",
+    description: "Electronic rear derailleur with precise shifting and wireless connectivity",
+    price: 459,
     quantityAvailable: 15,
-    category: "Support",
+    category: "Drivetrain",
     imageUrl: "/api/placeholder/400/300"
   },
   {
-    sku: "CY-TRN-004",
-    name: "Developer Training Program",
-    description: "Comprehensive 5-day training program for development teams on Cyoda platform best practices",
-    price: 5500,
+    sku: "BK-WHL-002", 
+    name: "Carbon Fiber Wheelset",
+    description: "Lightweight carbon wheelset with ceramic bearings for racing performance",
+    price: 1299,
     quantityAvailable: 8,
-    category: "Training",
+    category: "Wheels",
     imageUrl: "/api/placeholder/400/300"
   },
   {
-    sku: "CY-ADD-005",
-    name: "Additional Environment License",
-    description: "Extra development/staging environment license for multi-stage deployment pipelines",
-    price: 3200,
-    quantityAvailable: 20,
-    category: "Licenses",
+    sku: "BK-FRM-003",
+    name: "Titanium Frame Set",
+    description: "Premium titanium frame with lifetime warranty and custom geometry options",
+    price: 2499,
+    quantityAvailable: 5,
+    category: "Frames",
     imageUrl: "/api/placeholder/400/300"
   },
   {
-    sku: "CY-INT-006",
-    name: "Custom Integration Package",
-    description: "Bespoke integration development for connecting legacy systems to Cyoda platform",
-    price: 12000,
-    quantityAvailable: 3,
-    category: "Services",
+    sku: "BK-BRK-004",
+    name: "Hydraulic Disc Brake Set",
+    description: "High-performance hydraulic disc brakes with 160mm rotors and tool-free adjustment",
+    price: 329,
+    quantityAvailable: 22,
+    category: "Brakes",
     imageUrl: "/api/placeholder/400/300"
   },
   {
-    sku: "CY-AUD-007",
-    name: "Security Audit & Compliance",
-    description: "Comprehensive security assessment and compliance verification for enterprise deployments",
-    price: 7500,
-    quantityAvailable: 6,
-    category: "Services",
+    sku: "BK-SDP-005",
+    name: "Clipless Pedal System",
+    description: "Professional clipless pedals with adjustable float and dual-sided entry",
+    price: 149,
+    quantityAvailable: 30,
+    category: "Pedals",
     imageUrl: "/api/placeholder/400/300"
   },
   {
-    sku: "CY-EXT-008",
-    name: "Extended Warranty",
-    description: "3-year extended warranty and maintenance coverage for all Cyoda platform components",
-    price: 4200,
-    quantityAvailable: 12,
-    category: "Support",
+    sku: "BK-CHN-006",
+    name: "11-Speed Chain",
+    description: "Durable 11-speed chain with quick-link technology and corrosion resistance",
+    price: 45,
+    quantityAvailable: 50,
+    category: "Drivetrain",
+    imageUrl: "/api/placeholder/400/300"
+  },
+  {
+    sku: "BK-HLM-007",
+    name: "Aero Road Helmet",
+    description: "Lightweight aerodynamic helmet with MIPS technology and 24 ventilation ports",
+    price: 199,
+    quantityAvailable: 18,
+    category: "Safety",
+    imageUrl: "/api/placeholder/400/300"
+  },
+  {
+    sku: "BK-TYR-008",
+    name: "Tubeless Road Tires",
+    description: "High-performance tubeless tires with puncture protection and low rolling resistance",
+    price: 89,
+    quantityAvailable: 40,
+    category: "Tires",
     imageUrl: "/api/placeholder/400/300"
   }
 ];
 
-export const categories = ["All", "Licenses", "Services", "Support", "Training"];
+export const categories = ["All", "Drivetrain", "Wheels", "Frames", "Brakes", "Pedals", "Safety", "Tires"];

@@ -23,10 +23,10 @@ export function ProductList() {
       {/* Header */}
       <div className="text-center space-y-4">
         <h1 className="text-4xl font-bold bg-gradient-primary bg-clip-text text-transparent">
-          Cyoda Platform Products
+          Premium Bike Parts
         </h1>
         <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-          Enterprise-grade event-driven backend solutions and professional services for modern applications
+          High-performance bicycle components and accessories for road, mountain, and gravel cycling
         </p>
       </div>
 
