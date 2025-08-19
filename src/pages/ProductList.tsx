@@ -1,22 +1,28 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Search, Filter } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ProductCard } from "@/components/ProductCard";
-import { mockProducts, categories } from "@/lib/mockData";
+import { ProductService } from "@/services/cyoda";
+import { useAsync } from "@/hooks/useAsync";
 import { Product } from "@/types";
+import { AlertCircle } from "lucide-react";
+
+const categories = ["All", "Drivetrain", "Wheels", "Frames", "Brakes", "Pedals", "Safety", "Tires"];
 
 export function ProductList() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
 
-  const filteredProducts = mockProducts.filter((product: Product) => {
-    const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         product.description.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = selectedCategory === "All" || product.category === selectedCategory;
-    return matchesSearch && matchesCategory;
-  });
+  // Fetch products from Cyoda
+  const { data: productsData, loading, error, refetch } = useAsync(
+    () => ProductService.search(searchTerm, selectedCategory),
+    [searchTerm, selectedCategory]
+  );
+
+  const filteredProducts = productsData?.items || [];
 
   return (
     <div className="space-y-8">
@@ -61,11 +67,21 @@ export function ProductList() {
         </div>
       </div>
 
+      {/* Error Display */}
+      {error && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            Error loading products: {error.message}
+          </AlertDescription>
+        </Alert>
+      )}
+
       {/* Results Summary */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <span className="text-sm text-muted-foreground">
-            Showing {filteredProducts.length} of {mockProducts.length} products
+            {loading ? 'Loading...' : `Showing ${filteredProducts.length} of ${productsData?.total || 0} products`}
           </span>
           {selectedCategory !== "All" && (
             <Badge variant="secondary">
@@ -73,10 +89,18 @@ export function ProductList() {
             </Badge>
           )}
         </div>
+        <Button onClick={refetch} variant="outline" size="sm" disabled={loading}>
+          Refresh
+        </Button>
       </div>
 
       {/* Product Grid */}
-      {filteredProducts.length > 0 ? (
+      {loading ? (
+        <div className="text-center py-12">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading products...</p>
+        </div>
+      ) : filteredProducts.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {filteredProducts.map((product) => (
             <div key={product.sku} className="animate-slide-in">

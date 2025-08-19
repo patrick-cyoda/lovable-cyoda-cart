@@ -29,6 +29,14 @@ export function Layout({ children }: LayoutProps) {
                 Cyoda OMS
               </button>
               <span className="text-sm text-muted-foreground">Order Management System</span>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => navigate('/demo')}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                API Demo
+              </Button>
             </div>
             
             {!isCartPage && !isCheckoutPage && (

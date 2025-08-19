@@ -1,17 +1,21 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { Cart, CartLine, Product } from '@/types';
+import { CartService } from '@/services/cyoda';
 
 interface CartStore {
   cart: Cart | null;
+  loading: boolean;
+  error: string | null;
   createCart: () => void;
-  addItem: (product: Product, qty?: number) => void;
-  updateQty: (sku: string, qty: number) => void;
-  removeItem: (sku: string) => void;
+  addItem: (product: Product, qty?: number) => Promise<void>;
+  updateQty: (sku: string, qty: number) => Promise<void>;
+  removeItem: (sku: string) => Promise<void>;
   openCheckout: () => void;
   cancelCheckout: () => void;
   convertCart: () => void;
   clearCart: () => void;
+  syncWithCyoda: () => Promise<void>;
 }
 
 const generateCartId = () => `cart_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -26,20 +30,25 @@ export const useCartStore = create<CartStore>()(
   persist(
     (set, get) => ({
       cart: null,
+      loading: false,
+      error: null,
 
       createCart: () => {
-        set({
-          cart: {
-            cartId: generateCartId(),
-            lines: [],
-            totalItems: 0,
-            grandTotal: 0,
-            status: 'NEW'
-          }
-        });
+        const newCart: Cart = {
+          cartId: generateCartId(),
+          lines: [],
+          totalItems: 0,
+          grandTotal: 0,
+          status: 'NEW'
+        };
+        
+        set({ cart: newCart });
+        
+        // Optionally sync with Cyoda in background
+        get().syncWithCyoda().catch(console.error);
       },
 
-      addItem: (product: Product, qty = 1) => {
+      addItem: async (product: Product, qty = 1) => {
         const state = get();
         
         if (!state.cart) {
@@ -75,23 +84,30 @@ export const useCartStore = create<CartStore>()(
 
         const { totalItems, grandTotal } = calculateTotals(newLines);
 
-        set({
-          cart: {
-            ...cart,
-            lines: newLines,
-            totalItems,
-            grandTotal,
-            status: 'ACTIVE'
-          }
-        });
+        const updatedCart = {
+          ...cart,
+          lines: newLines,
+          totalItems,
+          grandTotal,
+          status: 'ACTIVE' as const
+        };
+
+        set({ cart: updatedCart });
+        
+        // Sync with Cyoda
+        try {
+          await get().syncWithCyoda();
+        } catch (error) {
+          console.error('Failed to sync cart with Cyoda:', error);
+        }
       },
 
-      updateQty: (sku: string, qty: number) => {
+      updateQty: async (sku: string, qty: number) => {
         const cart = get().cart;
         if (!cart) return;
 
         if (qty <= 0) {
-          get().removeItem(sku);
+          await get().removeItem(sku);
           return;
         }
 
@@ -103,31 +119,43 @@ export const useCartStore = create<CartStore>()(
 
         const { totalItems, grandTotal } = calculateTotals(newLines);
 
-        set({
-          cart: {
-            ...cart,
-            lines: newLines,
-            totalItems,
-            grandTotal
-          }
-        });
+        const updatedCart = {
+          ...cart,
+          lines: newLines,
+          totalItems,
+          grandTotal
+        };
+
+        set({ cart: updatedCart });
+        
+        try {
+          await get().syncWithCyoda();
+        } catch (error) {
+          console.error('Failed to sync cart with Cyoda:', error);
+        }
       },
 
-      removeItem: (sku: string) => {
+      removeItem: async (sku: string) => {
         const cart = get().cart;
         if (!cart) return;
 
         const newLines = cart.lines.filter(line => line.sku !== sku);
         const { totalItems, grandTotal } = calculateTotals(newLines);
 
-        set({
-          cart: {
-            ...cart,
-            lines: newLines,
-            totalItems,
-            grandTotal
-          }
-        });
+        const updatedCart = {
+          ...cart,
+          lines: newLines,
+          totalItems,
+          grandTotal
+        };
+
+        set({ cart: updatedCart });
+        
+        try {
+          await get().syncWithCyoda();
+        } catch (error) {
+          console.error('Failed to sync cart with Cyoda:', error);
+        }
       },
 
       openCheckout: () => {
@@ -168,6 +196,40 @@ export const useCartStore = create<CartStore>()(
 
       clearCart: () => {
         set({ cart: null });
+      },
+
+      syncWithCyoda: async () => {
+        const cart = get().cart;
+        if (!cart) return;
+
+        set({ loading: true, error: null });
+
+        try {
+          // Try to get existing cart first
+          let existingCart;
+          try {
+            existingCart = await CartService.get(cart.cartId);
+          } catch (error) {
+            // Cart doesn't exist in Cyoda, create it
+            existingCart = null;
+          }
+
+          if (existingCart) {
+            // Update existing cart
+            await CartService.update(cart.cartId, cart);
+          } else {
+            // Create new cart
+            await CartService.create(cart);
+          }
+
+          set({ loading: false });
+        } catch (error) {
+          console.error('Failed to sync with Cyoda:', error);
+          set({ 
+            loading: false, 
+            error: error instanceof Error ? error.message : 'Failed to sync with Cyoda'
+          });
+        }
       }
     }),
     {
