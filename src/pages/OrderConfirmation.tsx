@@ -3,50 +3,30 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { useNavigate } from "react-router-dom";
-import { CheckCircle, Package, Truck, ArrowLeft, Download } from "lucide-react";
-
-interface OrderData {
-  orderId: string;
-  orderNumber: string;
-  status: string;
-  lines: Array<{
-    sku: string;
-    name: string;
-    qty: number;
-    unitPrice?: number;
-    lineTotal: number;
-  }>;
-  totals: {
-    items: number;
-    grand: number;
-  };
-  customer: {
-    name: string;
-    email: string;
-    phone: string;
-    address: {
-      line1: string;
-      city: string;
-      postcode: string;
-      country: string;
-    };
-  };
-  createdAt: string;
-}
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { CheckCircle, Package, Truck, ArrowLeft, Download, AlertCircle } from "lucide-react";
+import { OrderService } from "@/services/cyoda";
+import { useAsync } from "@/hooks/useAsync";
+import { Order } from "@/types";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export function OrderConfirmation() {
   const navigate = useNavigate();
-  const [orderData, setOrderData] = useState<OrderData | null>(null);
+  const [searchParams] = useSearchParams();
+  
+  // Get order ID from URL params or localStorage fallback
+  const orderId = searchParams.get('orderId') || localStorage.getItem('latest-order-id');
+  
+  const { data: orderData, loading, error } = useAsync(
+    () => orderId ? OrderService.get(orderId) : Promise.reject(new Error('No order ID')),
+    [orderId]
+  );
 
   useEffect(() => {
-    const storedOrder = localStorage.getItem('latest-order');
-    if (storedOrder) {
-      setOrderData(JSON.parse(storedOrder));
-    } else {
+    if (!orderId) {
       navigate('/');
     }
-  }, [navigate]);
+  }, [orderId, navigate]);
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -94,8 +74,34 @@ export function OrderConfirmation() {
     }
   };
 
-  if (!orderData) {
-    return <div>Loading...</div>;
+  if (loading) {
+    return (
+      <div className="max-w-4xl mx-auto py-12">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading order details...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !orderData) {
+    return (
+      <div className="max-w-4xl mx-auto space-y-8">
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            {error?.message || 'Order not found'}. Please check your order confirmation email.
+          </AlertDescription>
+        </Alert>
+        <div className="text-center">
+          <Button onClick={() => navigate('/')} variant="outline">
+            <ArrowLeft className="w-4 h-4" />
+            Back to Home
+          </Button>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -150,6 +156,7 @@ export function OrderConfirmation() {
                       <div className="font-medium">{line.name}</div>
                       <div className="text-sm text-muted-foreground">
                         SKU: {line.sku} • Qty: {line.qty}
+                        {line.unitPrice && ` • ${formatPrice(line.unitPrice)} each`}
                       </div>
                     </div>
                     <div className="text-right font-medium">
@@ -177,14 +184,14 @@ export function OrderConfirmation() {
             </CardHeader>
             <CardContent>
               <div className="space-y-2 text-sm">
-                <div className="font-medium">{orderData.customer.name}</div>
-                <div>{orderData.customer.address.line1}</div>
-                <div>
-                  {orderData.customer.address.city}, {orderData.customer.address.postcode}
+                <div className="font-medium">
+                  Order will be shipped to the address provided during checkout
                 </div>
-                <div>{orderData.customer.address.country}</div>
+                <div className="text-muted-foreground">
+                  Shipping details are processed securely via Cyoda platform
+                </div>
                 <div className="text-muted-foreground pt-2">
-                  Contact: {orderData.customer.email} • {orderData.customer.phone}
+                  You will receive tracking information via email once your order ships
                 </div>
               </div>
             </CardContent>

@@ -12,6 +12,7 @@ import { useNavigate } from "react-router-dom";
 import { ArrowLeft, CreditCard, Truck, Shield } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { CheckoutForm } from "@/types";
+import { UserService, AddressService, OrderService, CartService } from "@/services/cyoda";
 
 const checkoutSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
@@ -65,42 +66,80 @@ export function Checkout() {
     setIsProcessing(true);
 
     try {
-      // Simulate API calls
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // 1. Create/Find User via standard entity endpoints
+      let userResult;
+      try {
+        const existingUsers = await UserService.findByEmail(data.email);
+        if (existingUsers.items.length > 0) {
+          // Update existing user
+          const existingUser = existingUsers.items[0];
+          userResult = await UserService.update(existingUser.userId, {
+            name: data.name,
+            phone: data.phone,
+          });
+          userResult.id = existingUser.userId;
+        } else {
+          // Create new user
+          userResult = await UserService.create({
+            name: data.name,
+            email: data.email,
+            phone: data.phone,
+          });
+        }
+      } catch (error) {
+        console.error('User creation/update failed:', error);
+        throw new Error('Failed to process user information');
+      }
 
-      // Generate order details
+      // 2. Create Address via standard entity endpoints
+      const addressResult = await AddressService.create({
+        userId: userResult.id,
+        line1: data.address.line1,
+        city: data.address.city,
+        postcode: data.address.postcode,
+        country: data.address.country,
+      });
+
+      // 3. Create Order via standard entity endpoints
       const orderNumber = `CY${Date.now().toString().slice(-8)}`;
-      const orderId = `order_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-
-      convertCart();
-      
-      // Store order details for confirmation page
-      const orderData = {
-        orderId,
+      const orderResult = await OrderService.create({
         orderNumber,
-        status: 'WAITING_TO_FULFILL',
-        lines: cart.lines,
+        userId: userResult.id,
+        shippingAddressId: addressResult.id,
+        lines: cart.lines.map(line => ({
+          sku: line.sku,
+          name: line.name,
+          unitPrice: line.price,
+          qty: line.qty,
+          lineTotal: line.lineTotal,
+        })),
         totals: {
           items: cart.grandTotal,
           grand: cart.grandTotal,
         },
-        customer: data,
+        status: 'WAITING_TO_FULFILL',
         createdAt: new Date().toISOString(),
-      };
+      });
 
-      localStorage.setItem('latest-order', JSON.stringify(orderData));
+      // 4. Update Cart status to CONVERTED via standard entity endpoints
+      await CartService.update(cart.cartId, { status: 'CONVERTED' });
+      convertCart();
       clearCart();
+
+      // Store order ID for confirmation page navigation
+      localStorage.setItem('latest-order-id', orderResult.id);
 
       toast({
         title: "Order placed successfully!",
         description: `Your order ${orderNumber} has been confirmed.`,
       });
 
-      navigate('/order-confirmation');
+      navigate(`/order-confirmation?orderId=${orderResult.id}`);
     } catch (error) {
+      console.error('Checkout error:', error);
       toast({
         title: "Error",
-        description: "Failed to place order. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to place order. Please try again.",
         variant: "destructive",
       });
     } finally {
