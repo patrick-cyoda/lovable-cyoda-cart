@@ -1,24 +1,34 @@
 # Cyoda OMS - Order Management System
 
-A modern e-commerce platform built on React with live integration to the Cyoda Entity Database Management System (EDBMS).
+A modern e-commerce platform built with React that integrates with Cyoda's Entity Database Management System (EDBMS) using standard REST API endpoints.
 
 ## 🚀 Features
 
-- **Live Cyoda Integration**: Real-time data persistence using Cyoda's EDBMS
-- **Product Catalog**: Browse and search products with category filtering
-- **Shopping Cart**: Add, remove, and modify cart items with persistent state
-- **Checkout Flow**: Complete order placement with customer information
-- **Order Management**: Track order status and history
-- **Demo Interface**: Test Cyoda API operations directly
+- **Standard Cyoda API Integration**: Direct integration with `/entity/{Entity}` endpoints
+- **Product Catalog**: Browse and search products with real-time filtering
+- **Shopping Cart**: Persistent cart state with Cyoda entity synchronization
+- **Checkout Flow**: Complete order workflow with user and address management
+- **Order Tracking**: Real-time order status and lifecycle management
+- **Demo Interface**: Interactive API testing and entity management
 
 ## 🏗️ Architecture
 
-This application demonstrates the Entity-Driven Architecture pattern using Cyoda:
+This application uses Cyoda's standard Entity-Driven Architecture with REST API endpoints:
 
-- **Entities**: Product, Cart, Order, User, Address
-- **Workflows**: Cart lifecycle, Order fulfillment, User identification
-- **State Management**: FSM-based transitions (NEW → ACTIVE → CHECKING_OUT → CONVERTED)
-- **Event-Driven**: Real-time updates and synchronization
+- **Standard Entity Endpoints**: All operations use `/entity/{Entity}` REST patterns
+- **Entities**: Product, Cart, Order, User, Address (stored as Cyoda entities)
+- **Workflows**: State transitions managed through entity updates
+- **Service Layer**: TypeScript services wrapping standard CRUD operations
+- **Error Handling**: Centralized error management with CyodaApiError class
+
+### Entity Operations
+
+All entities use standard REST patterns:
+- `POST /entity/{Entity}` - Create new entity
+- `GET /entity/{Entity}/{id}` - Get entity by ID  
+- `GET /entity/{Entity}` - List/search entities
+- `PATCH /entity/{Entity}/{id}` - Update entity
+- `DELETE /entity/{Entity}/{id}` - Delete entity
 
 ## 🛠️ Setup Instructions
 
